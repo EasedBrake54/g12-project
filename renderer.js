@@ -1,20 +1,32 @@
 const axios = require('axios');
 
-document.getElementById('startButton').addEventListener('click', () => {
-    const latitude = document.getElementById('latitude').value;
-    const longitude = document.getElementById('longitude').value;
+document.getElementById('startBtn').onclick = function() {
+    const lat = '22.0063';  // Fixed latitude for Palampur, India
+    const lon = '77.006';   // Fixed longitude for Palampur, India
 
-    axios.get('http://localhost:80http://localhost:8090/api/constellations?lat=${20.0063}&lon=${77.006}90/api/')
-    .then(response => {
-        document.getElementById('result').innerHTML = `
-            <h2>Visible Constellations:</h2>
-            <ul>
-                ${response.data.constellations.map(c => `<li>${c.name}</li>`).join('')}
-            </ul>
-        `;
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        document.getElementById('result').innerHTML = '<p>Error retrieving data. Check console for details.</p>';
-    });
-});
+    // Make a request to the Stellarium API
+    fetchConstellations(lat, lon);
+};
+
+// Function to fetch constellations and update the UI
+async function fetchConstellations(lat, lon) {
+    try {
+        const response = await axios.get(`http://localhost:8090/api/constellations?lat=${lat}&lon=${lon}`);
+        const constellations = response.data.constellations;
+
+        if (constellations && constellations.length > 0) {
+            const output = document.getElementById('output');
+            output.innerHTML = '';  // Clear previous output
+            constellations.forEach(constellation => {
+                const div = document.createElement('div');
+                div.innerHTML = `<h2>${constellation.name}</h2>`;
+                output.appendChild(div);
+            });
+        } else {
+            document.getElementById('output').innerHTML = 'No constellations visible at the moment.';
+        }
+    } catch (error) {
+        console.error('Error fetching constellations:', error.message);
+        document.getElementById('output').innerHTML = `Error fetching constellations: ${error.message}`;
+    }
+}
