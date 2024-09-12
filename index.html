@@ -9,29 +9,6 @@
     <button id="startBtn">Start</button>
     <div id="output"></div>
 
-    <script>
-        const { remote } = require('electron');
-
-        document.getElementById('startBtn').onclick = function() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition((position) => {
-                    const lat = position.coords.latitude;
-                    const lon = position.coords.longitude;
-
-                    fetch(`https://stellarium.example.api/constellations?lat=${lat}&lon=${lon}`)
-                        .then(response => response.json())
-                        .then(data => {
-                            document.getElementById('output').innerHTML = `
-                                <h2>${data.constellationName}</h2>
-                                <img src="${data.constellationImage}" alt="Constellation Image">
-                            `;
-                        })
-                        .catch(error => console.error('Error:', error));
-                });
-            } else {
-                alert('Geolocation is not supported by this browser.');
-            }
-        };
-    </script>
+    <script src="renderer.js"></script>  <!-- Link to renderer script -->
 </body>
 </html>
