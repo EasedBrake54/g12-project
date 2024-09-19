@@ -1,32 +1,80 @@
 const axios = require('axios');
+const axios = require('axios');
 
-document.getElementById('startBtn').onclick = function() {
+document.getElementById('startBtn').onclick = function () {
     const lat = '22.0063';  // Fixed latitude for Palampur, India
     const lon = '77.006';   // Fixed longitude for Palampur, India
 
-    // Make a request to the Stellarium API
-    fetchConstellations(lat, lon);
+    // Set location and fetch constellations
+    setLocationAndFetchConstellations(lat, lon);
 };
 
-// Function to fetch constellations and update the UI
-async function fetchConstellations(lat, lon) {
+// Function to set location and fetch visible constellations
+async function setLocationAndFetchConstellations(lat, lon) {
     try {
-        const response = await axios.get(`http://localhost:8090/api/constellations?lat=${lat}&lon=${lon}`);
-        const constellations = response.data.constellations;
+        // Step 1: Set the location in Stellarium
+        const params = new URLSearchParams({
+            latitude: lat,
+            longitude: lon,
+            altitude: '0',
+            timezone: 'Asia/Kolkata'
+        });
 
-        if (constellations && constellations.length > 0) {
-            const output = document.getElementById('output');
-            output.innerHTML = '';  // Clear previous output
-            constellations.forEach(constellation => {
-                const div = document.createElement('div');
-                div.innerHTML = `<h2>${constellation.name}</h2>`;
-                output.appendChild(div);
-            });
+        console.log("Sending location data:", params.toString());  // Debugging output
+
+        const locationResponse = await axios.post(
+            'http://localhost:8090/api/location/setlocation',
+            params.toString(),
+            {
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+            }
+        );
+        
+        if (locationResponse.status === 200) {
+            console.log('Location set successfully.');
+
+            // Step 2: Fetch information about constellations
+            const constellations = ['Orion', 'Ursa Major', 'Cassiopeia']; // Add more constellations here
+            fetchConstellationInfo(constellations);
         } else {
-            document.getElementById('output').innerHTML = 'No constellations visible at the moment.';
+            document.getElementById('output').innerHTML = 'Failed to set location.';
+        }
+
+    } catch (error) {
+        console.error('Error setting location:', error.message);
+        document.getElementById('output').innerHTML = `Error setting location: ${error.message}`;
+        if (error.response) {
+            console.error('Response data:', error.response.data);
+        }
+    }
+}
+
+// Function to fetch constellation information and update the UI
+async function fetchConstellationInfo(constellationNames) {
+    const output = document.getElementById('output');
+    output.innerHTML = '';  // Clear previous output
+
+    try {
+        for (const name of constellationNames) {
+            const response = await axios.get(`http://localhost:8090/api/objects/info?name=${name}&format=json`);
+
+            const data = response.data;
+
+            if (data['above-horizon']) {
+                const div = document.createElement('div');
+                div.innerHTML = `<h2>${data.name} is visible!</h2>`;
+                output.appendChild(div);
+            } else {
+                const div = document.createElement('div');
+                div.innerHTML = `<h2>${data.name} is below the horizon.</h2>`;
+                output.appendChild(div);
+            }
         }
     } catch (error) {
-        console.error('Error fetching constellations:', error.message);
+        console.error('Error fetching constellation info:', error.message);
         document.getElementById('output').innerHTML = `Error fetching constellations: ${error.message}`;
     }
 }
+
